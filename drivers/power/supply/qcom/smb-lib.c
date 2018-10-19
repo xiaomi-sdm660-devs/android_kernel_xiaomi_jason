@@ -5035,16 +5035,16 @@ static void typec_sink_insertion(struct smb_charger *chg)
 	 * Try.SNK entry status - ATTACHWAIT.SRC state and detected Rd-open
 	 * or RD-Ra for TccDebounce time.
 	 */
-	if (!chg->disable_try_snk) {
-		if (*chg->try_sink_enabled) {
-			exit_mode = typec_try_sink(chg);
 
-			if (exit_mode != ATTACHED_SRC) {
-				smblib_usb_typec_change(chg);
-				return;
-			}
+	if (*chg->try_sink_enabled) {
+		exit_mode = typec_try_sink(chg);
+
+		if (exit_mode != ATTACHED_SRC) {
+			smblib_usb_typec_change(chg);
+			return;
 		}
 	}
+
 	/* when a sink is inserted we should not wait on hvdcp timeout to
 	 * enable pd
 	 */

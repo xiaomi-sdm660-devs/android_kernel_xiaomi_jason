@@ -424,8 +424,7 @@ static int smb2_parse_dt(struct smb2 *chip)
 						"qcom,auto-recharge-soc");
 
 	chg->micro_usb_mode = of_property_read_bool(node, "qcom,micro-usb");
-	chg->disable_try_snk = of_property_read_bool(node,
-				"qcom,disable-try-sink");
+
 	chg->need_soft_charge_done = of_property_read_bool(node,
 				"qcom,need-soft-done");
 
@@ -1554,7 +1553,7 @@ static int smb2_configure_typec(struct smb_charger *chg)
 		return rc;
 	}
 
-	/* disable try.SINK mode and legacy cable IRQs for E4 */
+	/* disable try.SINK mode and legacy cable IRQs */
 	rc = smblib_masked_write(chg, TYPE_C_CFG_3_REG, EN_TRYSINK_MODE_BIT |
 				TYPEC_NONCOMPLIANT_LEGACY_CABLE_INT_EN_BIT |
 				TYPEC_LEGACY_CABLE_INT_EN_BIT, 0);
