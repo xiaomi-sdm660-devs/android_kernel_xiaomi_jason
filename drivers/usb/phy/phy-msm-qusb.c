@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -426,6 +427,7 @@ static int qusb_phy_update_dpdm(struct usb_phy *phy, int value)
 	return ret;
 }
 
+#if 0
 static void qusb_phy_get_tune2_param(struct qusb_phy *qphy)
 {
 	u8 num_of_bits;
@@ -473,6 +475,7 @@ static void qusb_phy_get_tune2_param(struct qusb_phy *qphy)
 
 	qphy->tune2_val = reg_val;
 }
+#endif
 
 static void qusb_phy_write_seq(void __iomem *base, u32 *seq, int cnt,
 		unsigned long delay)
@@ -579,6 +582,7 @@ static int qusb_phy_init(struct usb_phy *phy)
 	 * and try to read EFUSE value only once i.e. not every USB
 	 * cable connect case.
 	 */
+#if 0
 	if (qphy->tune2_efuse_reg && !tune2) {
 		if (!qphy->tune2_val)
 			qusb_phy_get_tune2_param(qphy);
@@ -588,6 +592,7 @@ static int qusb_phy_init(struct usb_phy *phy)
 		writel_relaxed(qphy->tune2_val,
 				qphy->base + QUSB2PHY_PORT_TUNE2);
 	}
+#endif
 
 	/* If tune modparam set, override tune value */
 
