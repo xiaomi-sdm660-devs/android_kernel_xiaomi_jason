@@ -351,7 +351,6 @@ obj-$(CONFIG_SND_SOC_WCD9320)	+= snd-soc-wcd9320.o
 obj-$(CONFIG_SND_SOC_WCD9330)	+= snd-soc-wcd9330.o
 obj-$(CONFIG_SND_SOC_WCD9335)	+= snd-soc-wcd9335.o
 obj-$(CONFIG_SND_SOC_WCD934X)	+= wcd934x/
-obj-$(CONFIG_SND_SOC_TAS2559)	+= tas2559/
 obj-$(CONFIG_SND_SOC_USB_HEADSET)	+= snd-soc-usb-headset.o
 ifeq ($(CONFIG_COMMON_CLK_MSM), y)
 	obj-$(CONFIG_AUDIO_EXT_CLK)	+= audio-ext-clock.o
