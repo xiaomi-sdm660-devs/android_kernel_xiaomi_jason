@@ -2469,10 +2469,10 @@ int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	int index = cpu_dai->id;
 	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
 
-	dev_info(rtd->card->dev,
-		"%s: substream = %s  stream = %d, dai name %s, dai ID %d, ref_cnt %d\n",
+	dev_dbg(rtd->card->dev,
+		"%s: substream = %s  stream = %d, dai name %s, dai ID %d\n",
 		__func__, substream->name, substream->stream,
-		cpu_dai->name, cpu_dai->id, mi2s_intf_conf[index].ref_cnt);
+		cpu_dai->name, cpu_dai->id);
 
 	if (index < PRIM_MI2S || index > QUAT_MI2S) {
 		ret = -EINVAL;
@@ -2546,8 +2546,8 @@ void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 	int port_id = msm_get_port_id(rtd->dai_link->be_id);
 	int index = rtd->cpu_dai->id;
 
-	pr_info("%s(): substream = %s  stream = %d, ref_cnt= %d \n", __func__,
-		 substream->name, substream->stream, mi2s_intf_conf[index].ref_cnt);
+	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
+		 substream->name, substream->stream);
 	if (index < PRIM_MI2S || index > QUAT_MI2S) {
 		pr_err("%s:invalid MI2S DAI(%d)\n", __func__, index);
 		return;
@@ -2559,7 +2559,6 @@ void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 		if (ret < 0)
 			pr_err("%s:clock disable failed for MI2S (%d); ret=%d\n",
 				__func__, index, ret);
-
 		if (mi2s_intf_conf[index].msm_is_ext_mclk) {
 			mi2s_mclk[index].enable = 0;
 			pr_debug("%s: Disabling mclk, clk_freq_in_hz = %u\n",

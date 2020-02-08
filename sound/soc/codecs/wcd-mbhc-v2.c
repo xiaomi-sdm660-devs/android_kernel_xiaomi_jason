@@ -10,8 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-#define DEBUG
-
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -2492,19 +2490,21 @@ static int wcd_mbhc_usb_c_analog_setup_gpios(struct wcd_mbhc *mbhc,
 		if (config->usbc_en1_gpio_p)
 			rc = msm_cdc_pinctrl_select_active_state(
 				config->usbc_en1_gpio_p);
-		if (gpio_is_valid(config->usbc_en1_gpio))
-			gpio_set_value(config->usbc_en1_gpio, 1);
+		if (rc == 0 && config->usbc_en2n_gpio_p)
+			rc = msm_cdc_pinctrl_select_active_state(
+				config->usbc_en2n_gpio_p);
 		if (rc == 0 && config->usbc_force_gpio_p)
 			rc = msm_cdc_pinctrl_select_active_state(
 				config->usbc_force_gpio_p);
 		mbhc->usbc_mode = POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER;
 	} else {
 		/* no delay is required when disabling GPIOs */
+		if (config->usbc_en2n_gpio_p)
+			msm_cdc_pinctrl_select_sleep_state(
+				config->usbc_en2n_gpio_p);
 		if (config->usbc_en1_gpio_p)
 			msm_cdc_pinctrl_select_sleep_state(
 				config->usbc_en1_gpio_p);
-		if (gpio_is_valid(config->usbc_en1_gpio))
-			gpio_set_value(config->usbc_en1_gpio, 0);
 		if (config->usbc_force_gpio_p)
 			msm_cdc_pinctrl_select_sleep_state(
 				config->usbc_force_gpio_p);
@@ -2651,17 +2651,16 @@ static int wcd_mbhc_init_gpio(struct wcd_mbhc *mbhc,
 
 	dev_dbg(mbhc->codec->dev, "%s: gpio %s\n", __func__, gpio_dt_str);
 
-	*gpio = of_get_named_gpio(card->dev->of_node, gpio_dt_str, 0);
-	if (!gpio_is_valid(*gpio))
-		*gpio_dn = of_parse_phandle(card->dev->of_node, gpio_dt_str, 0);
-	if (!gpio_is_valid(*gpio) && !(*gpio_dn)) {
-		dev_err(card->dev, "%s, property %s not in node %s",
-			__func__, gpio_dt_str,
-			card->dev->of_node->full_name);
-		rc = -EINVAL;
-	} else {
-		dev_dbg(card->dev, "%s, detected %s",
-			__func__, gpio_dt_str);
+	*gpio_dn = of_parse_phandle(card->dev->of_node, gpio_dt_str, 0);
+
+	if (!(*gpio_dn)) {
+		*gpio = of_get_named_gpio(card->dev->of_node, gpio_dt_str, 0);
+		if (!gpio_is_valid(*gpio)) {
+			dev_err(card->dev, "%s, property %s not in node %s",
+				__func__, gpio_dt_str,
+				card->dev->of_node->full_name);
+			rc = -EINVAL;
+		}
 	}
 
 	return rc;
@@ -2705,11 +2704,17 @@ int wcd_mbhc_start(struct wcd_mbhc *mbhc, struct wcd_mbhc_config *mbhc_cfg)
 	if (mbhc_cfg->enable_usbc_analog) {
 		dev_dbg(mbhc->codec->dev, "%s: usbc analog enabled\n",
 				__func__);
-
 		rc = wcd_mbhc_init_gpio(mbhc, mbhc_cfg,
-				"qcom,usbc-analog-en1-gpio",
+				"qcom,usbc-analog-en1_gpio",
 				&config->usbc_en1_gpio,
 				&config->usbc_en1_gpio_p);
+		if (rc)
+			goto err;
+
+		rc = wcd_mbhc_init_gpio(mbhc, mbhc_cfg,
+				"qcom,usbc-analog-en2_n_gpio",
+				&config->usbc_en2n_gpio,
+				&config->usbc_en2n_gpio_p);
 		if (rc)
 			goto err;
 
