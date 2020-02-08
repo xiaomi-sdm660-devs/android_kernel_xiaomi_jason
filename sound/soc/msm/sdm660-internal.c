@@ -3059,24 +3059,6 @@ static struct snd_soc_dai_link be_sec_mi2s_rx_tfa98xx_dai_links[] = {
 	},
 };
 
-static struct snd_soc_dai_link be_sec_mi2s_rx_tas2559_dai_links[] = {
-	{
-		.name = LPASS_BE_SEC_MI2S_RX,
-		.stream_name = "Secondary MI2S Playback",
-		.cpu_dai_name = "msm-dai-q6-mi2s.1",
-		.platform_name = "msm-pcm-routing",
-		.codec_name = "tas2559.2-004c",
-		.codec_dai_name = "tas2559 ASI1",
-		.no_pcm = 1,
-		.dpcm_playback = 1,
-		.be_id = MSM_BACKEND_DAI_SECONDARY_MI2S_RX,
-		.be_hw_params_fixup = msm_common_be_hw_params_fixup,
-		.ops = &msm_mi2s_be_ops,
-		.ignore_suspend = 1,
-		.ignore_pmdown_time = 1,
-	},
-};
-
 static struct snd_soc_dai_link msm_int_dai_links[
 ARRAY_SIZE(msm_int_dai) +
 ARRAY_SIZE(msm_int_wsa_dai) +
@@ -3174,11 +3156,6 @@ static struct snd_soc_card *msm_int_populate_sndcard_dailinks(
 				be_sec_mi2s_rx_tfa98xx_dai_links,
 				sizeof(be_sec_mi2s_rx_tfa98xx_dai_links));
 			len1 += ARRAY_SIZE(be_sec_mi2s_rx_tfa98xx_dai_links);
-		} else if ((get_hw_version_platform() == HARDWARE_PLATFORM_NITROGEN)) {
-			memcpy(dailink + len1,
-				be_sec_mi2s_rx_tas2559_dai_links,
-				sizeof(be_sec_mi2s_rx_tas2559_dai_links));
-			len1 += ARRAY_SIZE(be_sec_mi2s_rx_tas2559_dai_links);
 		} else {
 			memcpy(dailink + len1,
 				lpass_be_sec_mi2s_rx_dai_links,
