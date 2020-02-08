@@ -134,7 +134,6 @@ config SND_SOC_INT_CODEC
 	select SND_SOC_SDM660_COMMON
 	select SND_SOC_COMPRESS
 	select PINCTRL_LPI
-	select SND_SOC_TFA9894
 	help
 	To add support for SoC audio on MSM_INT.
 	This will enable sound soc drivers which
