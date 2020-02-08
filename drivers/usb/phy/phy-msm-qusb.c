@@ -153,14 +153,9 @@ struct qusb_phy {
 	bool			ulpi_mode;
 	bool			rm_pulldown;
 	bool			is_se_clk;
-	bool			use_efuse;
-	bool			vdd_enabled;
 
 	struct regulator_desc	dpdm_rdesc;
 	struct regulator_dev	*dpdm_rdev;
-	struct regulator_desc	vdd_rdesc;
-	struct regulator_dev	*vdd_rdev;
-	struct power_supply	*usb_psy;
 
 	/* emulation targets specific */
 	void __iomem		*emu_phy_base;
@@ -215,47 +210,6 @@ static int qusb_phy_config_vdd(struct qusb_phy *qphy, int high)
 	return ret;
 }
 
-static int qusb_phy_vdd(struct qusb_phy *qphy, bool on)
-{
-	int ret = 0;
-
-	if (!qphy->vdd_enabled && on) {
-		dev_dbg(qphy->phy.dev, "TURNING ON VDD\n");
-		ret = qusb_phy_config_vdd(qphy, true);
-		if (ret) {
-			dev_err(qphy->phy.dev, "Unable to config VDD:%d\n",
-								ret);
-			goto err;
-		}
-
-		ret = regulator_enable(qphy->vdd);
-		if (ret) {
-			dev_err(qphy->phy.dev, "Unable to enable VDD\n");
-			goto err;
-		}
-		qphy->vdd_enabled = true;
-	}
-
-	if (qphy->vdd_enabled && !on) {
-		dev_info(qphy->phy.dev, "TURNING OFF VDD\n");
-		ret = regulator_disable(qphy->vdd);
-		if (ret) {
-			dev_err(qphy->phy.dev, "Unable to disable vdd:%d\n",
-									ret);
-			goto err;
-		}
-
-		ret = qusb_phy_config_vdd(qphy, false);
-		if (ret) {
-			dev_err(qphy->phy.dev, "Unable unconfig VDD:%d\n", ret);
-			goto err;
-		}
-		qphy->vdd_enabled = false;
-	}
-err:
-	return ret;
-}
-
 static int qusb_phy_enable_power(struct qusb_phy *qphy, bool on)
 {
 	int ret = 0;
@@ -271,9 +225,18 @@ static int qusb_phy_enable_power(struct qusb_phy *qphy, bool on)
 	if (!on)
 		goto disable_vdda33;
 
-	ret = qusb_phy_vdd(qphy, true);
-	if (ret < 0)
+	ret = qusb_phy_config_vdd(qphy, true);
+	if (ret) {
+		dev_err(qphy->phy.dev, "Unable to config VDD:%d\n",
+							ret);
 		goto err_vdd;
+	}
+
+	ret = regulator_enable(qphy->vdd);
+	if (ret) {
+		dev_err(qphy->phy.dev, "Unable to enable VDD\n");
+		goto unconfig_vdd;
+	}
 
 	ret = regulator_set_load(qphy->vdda18, QUSB2PHY_1P8_HPM_LOAD);
 	if (ret < 0) {
@@ -353,7 +316,16 @@ put_vdda18_lpm:
 		dev_err(qphy->phy.dev, "Unable to set LPM of vdda18\n");
 
 disable_vdd:
-	ret = qusb_phy_vdd(qphy, false);
+	ret = regulator_disable(qphy->vdd);
+	if (ret)
+		dev_err(qphy->phy.dev, "Unable to disable vdd:%d\n",
+								ret);
+
+unconfig_vdd:
+	ret = qusb_phy_config_vdd(qphy, false);
+	if (ret)
+		dev_err(qphy->phy.dev, "Unable unconfig VDD:%d\n",
+								ret);
 err_vdd:
 	qphy->power_enabled = false;
 	dev_dbg(qphy->phy.dev, "QUSB PHY's regulators are turned OFF.\n");
@@ -455,6 +427,7 @@ static int qusb_phy_update_dpdm(struct usb_phy *phy, int value)
 	return ret;
 }
 
+#if 0
 static void qusb_phy_get_tune2_param(struct qusb_phy *qphy)
 {
 	u8 num_of_bits;
@@ -502,6 +475,7 @@ static void qusb_phy_get_tune2_param(struct qusb_phy *qphy)
 
 	qphy->tune2_val = reg_val;
 }
+#endif
 
 static void qusb_phy_write_seq(void __iomem *base, u32 *seq, int cnt,
 		unsigned long delay)
@@ -608,7 +582,8 @@ static int qusb_phy_init(struct usb_phy *phy)
 	 * and try to read EFUSE value only once i.e. not every USB
 	 * cable connect case.
 	 */
-	if (qphy->tune2_efuse_reg && !tune2 && qphy->use_efuse) {
+#if 0
+	if (qphy->tune2_efuse_reg && !tune2) {
 		if (!qphy->tune2_val)
 			qusb_phy_get_tune2_param(qphy);
 
@@ -617,6 +592,7 @@ static int qusb_phy_init(struct usb_phy *phy)
 		writel_relaxed(qphy->tune2_val,
 				qphy->base + QUSB2PHY_PORT_TUNE2);
 	}
+#endif
 
 	/* If tune modparam set, override tune value */
 
@@ -923,96 +899,6 @@ static int qusb_phy_regulator_init(struct qusb_phy *qphy)
 	return 0;
 }
 
-static int get_psy_typec_mode(struct qusb_phy *qphy)
-{
-	union power_supply_propval pval = {0};
-
-	if (!qphy->usb_psy) {
-		qphy->usb_psy = power_supply_get_by_name("usb");
-		if (!qphy->usb_psy) {
-			dev_err(qphy->phy.dev, "Could not get usb psy\n");
-			return -ENODEV;
-		}
-	}
-
-	power_supply_get_property(qphy->usb_psy, POWER_SUPPLY_PROP_TYPEC_MODE,
-			&pval);
-
-	return pval.intval;
-}
-
-static int qusb_phy_vdd_regulator_enable(struct regulator_dev *rdev)
-{
-	struct qusb_phy *qphy = rdev_get_drvdata(rdev);
-	int ret;
-
-	dev_dbg(qphy->phy.dev, "%s\n", __func__);
-	ret = qusb_phy_vdd(qphy, true);
-	if (ret)
-		dev_err(qphy->phy.dev, "Unable to enable VDD\n");
-	return ret;
-}
-
-static int qusb_phy_vdd_regulator_disable(struct regulator_dev *rdev)
-{
-	struct qusb_phy *qphy = rdev_get_drvdata(rdev);
-	int ret;
-
-	dev_dbg(qphy->phy.dev, "%s\n", __func__);
-	ret = qusb_phy_vdd(qphy, false);
-	if (ret)
-		dev_err(qphy->phy.dev, "Unable to disable VDD\n");
-
-	return ret;
-}
-
-static int qusb_phy_vdd_regulator_is_enabled(struct regulator_dev *rdev)
-{
-	struct qusb_phy *qphy = rdev_get_drvdata(rdev);
-
-	dev_dbg(qphy->phy.dev, "%s\n", __func__);
-	if (get_psy_typec_mode(qphy) < POWER_SUPPLY_TYPEC_SOURCE_DEFAULT)
-		return qphy->vdd_enabled;
-	else
-		return 0;
-}
-
-static struct regulator_ops qusb_phy_vdd_regulator_ops = {
-	.enable		= qusb_phy_vdd_regulator_enable,
-	.disable	= qusb_phy_vdd_regulator_disable,
-	.is_enabled	= qusb_phy_vdd_regulator_is_enabled,
-};
-
-static int qusb_phy_usb_vdd_regulator_init(struct qusb_phy *qphy)
-{
-	struct device *dev = qphy->phy.dev;
-	struct regulator_config cfg = {};
-	struct regulator_init_data *init_data;
-
-	init_data = devm_kzalloc(dev, sizeof(*init_data), GFP_KERNEL);
-	if (!init_data)
-		return -ENOMEM;
-
-	init_data->constraints.valid_ops_mask |= REGULATOR_CHANGE_STATUS;
-	qphy->vdd_rdesc.owner = THIS_MODULE;
-	qphy->vdd_rdesc.type = REGULATOR_VOLTAGE;
-	qphy->vdd_rdesc.ops = &qusb_phy_vdd_regulator_ops;
-	qphy->vdd_rdesc.name = "qcom,usb-vdd";
-	qphy->vdd_rdesc.of_match = "qcom,usb-vdd";
-
-	cfg.dev = dev;
-	cfg.init_data = init_data;
-	cfg.driver_data = qphy;
-	cfg.of_node = dev->of_node;
-
-	qphy->vdd_rdev = devm_regulator_register(dev, &qphy->vdd_rdesc, &cfg);
-	if (IS_ERR(qphy->vdd_rdev))
-		return PTR_ERR(qphy->vdd_rdev);
-
-	return 0;
-}
-
-
 static int qusb_phy_probe(struct platform_device *pdev)
 {
 	struct qusb_phy *qphy;
@@ -1043,8 +929,6 @@ static int qusb_phy_probe(struct platform_device *pdev)
 		}
 	}
 
-	/* we do not use efuse feature, so add a false flag here when driver probe */
-	qphy->use_efuse = false;
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 							"tune2_efuse_addr");
 	if (res) {
@@ -1288,10 +1172,6 @@ static int qusb_phy_probe(struct platform_device *pdev)
 		return ret;
 
 	ret = qusb_phy_regulator_init(qphy);
-	if (ret)
-		usb_remove_phy(&qphy->phy);
-
-	ret = qusb_phy_usb_vdd_regulator_init(qphy);
 	if (ret)
 		usb_remove_phy(&qphy->phy);
 

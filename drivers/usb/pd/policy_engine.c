@@ -471,6 +471,7 @@ static const unsigned int usbpd_extcon_cable[] = {
 
 /* EXTCON_USB and EXTCON_USB_HOST are mutually exclusive */
 static const u32 usbpd_extcon_exclusive[] = {0x3, 0};
+
 enum plug_orientation usbpd_get_plug_orientation(struct usbpd *pd)
 {
 	int ret;
