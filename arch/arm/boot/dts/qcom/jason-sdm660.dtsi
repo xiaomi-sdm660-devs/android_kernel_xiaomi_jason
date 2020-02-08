@@ -405,8 +405,12 @@
 	firmware: firmware {
 		android {
 			fstab {
+				system {
+					fsmgr_flags = "wait";
+				};
 				vendor {
-					status = "disabled";
+					dev = "/dev/block/platform/soc/c0c4000.sdhci/by-name/cust";
+					fsmgr_flags = "wait";
 				};
 			};
 		};
