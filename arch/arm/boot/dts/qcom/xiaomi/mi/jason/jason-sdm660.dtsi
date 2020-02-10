@@ -1,4 +1,4 @@
-#include "xiaomi-sdm660-common.dtsi"
+#include "../xiaomi-sdm660-common.dtsi"
 #include "jason-camera-sensor.dtsi"
 
 &pm660_charger {

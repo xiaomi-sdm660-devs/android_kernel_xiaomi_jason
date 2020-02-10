@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include "sdm660-pinctrl.dtsi"
+#include "../../sdm660-pinctrl.dtsi"
 
 &uartblsp1dm1 {
 	status = "ok";
