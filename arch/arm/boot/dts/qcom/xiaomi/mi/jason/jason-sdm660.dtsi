@@ -1,4 +1,5 @@
 #include "../xiaomi-sdm660-common.dtsi"
+#include "jason-sdm660-mdss-panels.dtsi"
 #include "jason-camera-sensor.dtsi"
 
 &pm660_charger {
@@ -392,8 +393,10 @@
 	regulator-always-on;
 };
 
-&qcom_qbt1000 {
-	status = "disabled";
+&soc {
+	qcom,qbt1000 {
+		status = "disabled";
+	};
 };
 
 &sdhc_2 {
@@ -414,6 +417,8 @@
 };
 
 
-&ssc_sensors {
-	qcom,firmware-name = "adsp_c8";
+&soc {
+	qcom,msm-adsp-loader {
+		qcom,firmware-name = "adsp_c8";
+	};
 };

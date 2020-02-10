@@ -12,6 +12,7 @@
  */
 
 #include "../../sdm660-pinctrl.dtsi"
+#include "sdm660-overlay.dtsi"
 
 &uartblsp1dm1 {
 	status = "ok";
@@ -176,20 +177,6 @@
 
 &dsi_rm67195_amoled_fhd_cmd {
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_labibb_amoled>;
-};
-
-&dsi_jdi_fhd_r63452_cmd {
-	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
-	qcom,mdss-dsi-bl-min-level = <1>;
-	qcom,mdss-dsi-bl-max-level = <4095>;
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
-};
-
-&dsi_sharp_fhd_td4322_cmd {
-	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
-	qcom,mdss-dsi-bl-min-level = <1>;
-	qcom,mdss-dsi-bl-max-level = <4095>;
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_sharp_td4322>;
 };
 
 &sdhc_1 {
