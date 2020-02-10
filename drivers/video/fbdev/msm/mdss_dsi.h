@@ -67,8 +67,6 @@
 
 #define NONE_PANEL "none"
 
-#define BUF_LEN_MAX    256
-
 enum {		/* mipi dsi panel */
 	DSI_VIDEO_MODE,
 	DSI_CMD_MODE,
@@ -397,12 +395,6 @@ struct dsi_err_container {
 	s64 err_time[MAX_ERR_INDEX];
 };
 
-struct dsi_panel_read {
-	char cmd;
-	char param_num;
-	int params_bit; /*  bit:1 - this parameter need to return */
-};
-
 #define DSI_CTRL_LEFT		DSI_CTRL_0
 #define DSI_CTRL_RIGHT		DSI_CTRL_1
 #define DSI_CTRL_CLK_SLAVE	DSI_CTRL_RIGHT
@@ -428,7 +420,6 @@ struct mdss_dsi_ctrl_pdata {
 	int (*on) (struct mdss_panel_data *pdata);
 	int (*post_panel_on)(struct mdss_panel_data *pdata);
 	int (*off) (struct mdss_panel_data *pdata);
-	int (*dispparam_fnc) (struct mdss_panel_data *pdata);
 	int (*low_power_config) (struct mdss_panel_data *pdata, int enable);
 	int (*set_col_page_addr)(struct mdss_panel_data *pdata, bool force);
 	int (*check_status) (struct mdss_dsi_ctrl_pdata *pdata);
@@ -461,7 +452,6 @@ struct mdss_dsi_ctrl_pdata {
 	int irq_cnt;
 	int disp_te_gpio;
 	int rst_gpio;
-	int tp_rst_gpio;
 	int disp_en_gpio;
 	int bklt_en_gpio;
 	bool bklt_en_gpio_invert;
@@ -471,7 +461,6 @@ struct mdss_dsi_ctrl_pdata {
 	int lcd_mode_sel_gpio;
 	int bklt_ctrl;	/* backlight ctrl */
 	enum dsi_ctrl_op_mode bklt_dcs_op_mode; /* backlight dcs ctrl mode */
-	u32 bklt_level;
 	bool pwm_pmi;
 	int pwm_period;
 	int pwm_pmic_gpio;
@@ -512,81 +501,6 @@ struct mdss_dsi_ctrl_pdata {
 	struct dsi_panel_cmds lp_on_cmds;
 	struct dsi_panel_cmds lp_off_cmds;
 	struct dsi_panel_cmds status_cmds;
-
-	struct dsi_panel_cmds dispparam_cmds;
-	struct dsi_panel_cmds dispparam_cabcon_cmds;
-	struct dsi_panel_cmds dispparam_cabcguion_cmds;
-	struct dsi_panel_cmds dispparam_cabcstillon_cmds;
-	struct dsi_panel_cmds dispparam_cabcmovieon_cmds;
-	struct dsi_panel_cmds dispparam_cabcoff_cmds;
-	struct dsi_panel_cmds dispparam_skince_cabcuion_cmds;
-	struct dsi_panel_cmds dispparam_skince_cabcstillon_cmds;
-	struct dsi_panel_cmds dispparam_skince_cabcmovieon_cmds;
-	struct dsi_panel_cmds dispparam_skince_cabcoff_cmds;
-	struct dsi_panel_cmds dispparam_ceon_cmds;
-	struct dsi_panel_cmds dispparam_ceoff_cmds;
-	struct dsi_panel_cmds dispparam_gammareload_cmds;
-	struct dsi_panel_cmds dispparam_warm_cmds;
-	struct dsi_panel_cmds dispparam_default_cmds;
-	struct dsi_panel_cmds dispparam_cold_cmds;
-	struct dsi_panel_cmds dispparam_papermode_cmds;
-	struct dsi_panel_cmds dispparam_papermode1_cmds;
-	struct dsi_panel_cmds dispparam_papermode2_cmds;
-	struct dsi_panel_cmds dispparam_papermode3_cmds;
-	struct dsi_panel_cmds dispparam_papermode4_cmds;
-	struct dsi_panel_cmds dispparam_papermode5_cmds;
-	struct dsi_panel_cmds dispparam_papermode6_cmds;
-	struct dsi_panel_cmds dispparam_papermode7_cmds;
-	struct dsi_panel_cmds dispparam_idleon_cmds;
-	struct dsi_panel_cmds dispparam_idleoff_cmds;
-	struct dsi_panel_cmds dispparam_test_cmds;
-
-	struct dsi_panel_cmds dispparam_scon_cmds;
-	struct dsi_panel_cmds dispparam_sreon_cmds;
-	struct dsi_panel_cmds dispparam_sreoff_cmds;
-	struct dsi_panel_cmds dispparam_vividweak_cmds;
-	struct dsi_panel_cmds dispparam_vividstrong_cmds;
-	struct dsi_panel_cmds dispparam_vividoff_cmds;
-	struct dsi_panel_cmds dispparam_smartweak_cmds;
-	struct dsi_panel_cmds dispparam_smartstrong_cmds;
-	struct dsi_panel_cmds dispparam_smartoff_cmds;
-	struct dsi_panel_cmds dispparam_level0_cmds;
-	struct dsi_panel_cmds dispparam_level1_cmds;
-	struct dsi_panel_cmds dispparam_level2_cmds;
-	struct dsi_panel_cmds dispparam_level3_cmds;
-	struct dsi_panel_cmds dispparam_level4_cmds;
-	struct dsi_panel_cmds dispparam_level5_cmds;
-	struct dsi_panel_cmds dispparam_level6_cmds;
-
-	struct dsi_panel_cmds dispparam_nightmode1_cmds;
-	struct dsi_panel_cmds dispparam_nightmode2_cmds;
-	struct dsi_panel_cmds dispparam_nightmode3_cmds;
-	struct dsi_panel_cmds dispparam_nightmode4_cmds;
-	struct dsi_panel_cmds dispparam_nightmode5_cmds;
-
-	struct dsi_panel_cmds dispparam_normal1_cmds;
-	struct dsi_panel_cmds dispparam_normal2_cmds;
-	struct dsi_panel_cmds dispparam_srgb_cmds;
-	struct dsi_panel_cmds dispparam_skin_ce_cmds;
-	struct dsi_panel_cmds dispparam_skin_ce_off_cmds;
-
-	struct dsi_panel_cmds dispparam_dimmingon_cmds;
-
-	struct dsi_panel_cmds displayoff_cmds;
-	struct dsi_panel_cmds displayon_cmds;
-	struct dsi_panel_cmds dispparam_hbm_l1_on_cmds;
-    struct dsi_panel_cmds dispparam_hbm_l2_on_cmds;
-    struct dsi_panel_cmds dispparam_hbm_l3_on_cmds;
-	struct dsi_panel_cmds dispparam_hbm_off_cmds;
-
-	bool dsi_panel_off_mode;
-
-	struct dsi_panel_read xy_coordinate_cmds;
-	char panel_read_data[BUF_LEN_MAX];
-
-	struct delayed_work cmds_work;
-	struct delayed_work panel_dead_report_work;
-
 	u32 *status_valid_params;
 	u32 *status_cmds_rlen;
 	u32 *status_value;
@@ -612,7 +526,6 @@ struct mdss_dsi_ctrl_pdata {
 	struct mutex mutex;
 	struct mutex cmd_mutex;
 	struct mutex cmdlist_mutex;
-	struct mutex dsi_ctrl_mutex;
 	struct regulator *lab; /* vreg handle */
 	struct regulator *ibb; /* vreg handle */
 	struct mutex clk_lane_mutex;
@@ -634,7 +547,6 @@ struct mdss_dsi_ctrl_pdata {
 
 	bool is_phyreg_enabled;
 	bool burst_mode_enabled;
-	bool dsi_pipe_ready;
 
 	struct dsi_buf tx_buf;
 	struct dsi_buf rx_buf;
@@ -680,6 +592,17 @@ struct mdss_dsi_ctrl_pdata {
 	bool update_phy_timing; /* flag to recalculate PHY timings */
 
 	bool phy_power_off;
+
+	bool dsi_panel_off_mode;
+	int tp_rst_gpio;
+	u32 bklt_level;
+
+	struct dsi_panel_cmds dispparam_dimmingon_cmds;
+	struct dsi_panel_cmds displayoff_cmds;
+	struct dsi_panel_cmds displayon_cmds;
+
+	struct delayed_work cmds_work;
+	struct delayed_work panel_dead_report_work;
 };
 
 struct dsi_status_data {
